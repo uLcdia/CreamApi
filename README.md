@@ -1,5 +1,8 @@
 ### CreamInstaller: Automatic DLC Unlocker Installer & Configuration Generator
 
+##DONATE 
+https://ubd.one/donate
+
 ![Program Preview Image](https://raw.githubusercontent.com/pointfeev/CreamInstaller/main/preview.png)
 
 ###### The program utilizes the latest versions of [Koaloader](https://github.com/acidicoala/Koaloader), [SmokeAPI](https://github.com/acidicoala/SmokeAPI), [ScreamAPI](https://github.com/acidicoala/ScreamAPI), [Uplay R1 Unlocker](https://github.com/acidicoala/UplayR1Unlocker) and [Uplay R2 Unlocker](https://github.com/acidicoala/UplayR2Unlocker), all by the wonderful [acidicoala](https://github.com/acidicoala), and all downloaded from the posts above and embedded into the program itself; no further downloads necessary on your part!
