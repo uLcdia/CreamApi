@@ -4,8 +4,6 @@
 
 # Https://ubd.one/donate
 
-![Program Preview Image](https://raw.githubusercontent.com/pointfeev/CreamInstaller/main/preview.png)
-
 ###### The program utilizes the latest versions of [Koaloader](https://github.com/acidicoala/Koaloader), [SmokeAPI](https://github.com/acidicoala/SmokeAPI), [ScreamAPI](https://github.com/acidicoala/ScreamAPI), [Uplay R1 Unlocker](https://github.com/acidicoala/UplayR1Unlocker) and [Uplay R2 Unlocker](https://github.com/acidicoala/UplayR2Unlocker), all by the wonderful [acidicoala](https://github.com/acidicoala), and all downloaded from the posts above and embedded into the program itself; no further downloads necessary on your part!
 ---
 #### Description:
@@ -31,7 +29,7 @@ games and DLCs the user selects; however, through the use of **right-click conte
 
 ---
 #### Installation:
-1. Click [here](https://github.com/pointfeev/CreamInstaller/releases/latest/download/CreamInstaller.zip) to download the latest release from [GitHub](https://github.com/pointfeev/CreamInstaller).
+1. Click [here]([https://github.com/pointfeev/CreamInstaller/releases/latest/download/CreamInstaller.zip](https://github.com/ubden/CreamApi/releases)) to download the latest release from [GitHub]([https://github.com/pointfeev/CreamInstaller](https://github.com/ubden/CreamApi/releases)).
 2. Extract the executable to anywhere on your computer you want. *It's completely self-contained.*
 
 If the program doesn't seem to launch, try downloading and installing [.NET 7 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-7.0.2-windows-x64-installer).
@@ -46,17 +44,13 @@ If the program doesn't seem to launch, try downloading and installing [.NET 7 Ru
 3. Wait for the program to download and install SteamCMD (if you chose a Steam game). *Very fast, depends on internet speed.*
 4. Wait for the program to gather and cache the chosen games' information & DLCs. *May take a good amount of time on the first run, depends on how many games you chose and how many DLCs they have.*
 5. **CAREFULLY** select which games' DLCs you wish to unlock. *Obviously none of the DLC unlockers are tested for every single game!*
-6. Choose whether or not to install with Koaloader, and if so then also pick the proxy DLL to use. *If the default version.dll doesn't work, then see [here](https://cs.rin.ru/forum/viewtopic.php?p=2552172#p2552172) to find one that does.*
+6. Choose whether or not to install with Koaloader, and if so then also pick the proxy DLL to use. *If the default version.dll doesn't work, then see [here](https://forum.ubden.com.tr/konu/creaminstaller-auto-dlc-unlocker-installer-config-gen.1602/#google_vignette) to find one that does.*
 7. Click the **Generate and Install** button.
 8. Click the **OK** button to close the program.
 9. If any of the DLC unlockers cause problems with any of the games you installed them on, simply go back to step 5 and select what games you wish you **revert** changes to, and instead click the **Uninstall** button this time.
 
 ---
 ##### Bugs/Crashes/Issues:
-For reliable and quick assistance, all bugs, crashes and other issues should be referred to the [GitHub Issues](https://github.com/pointfeev/CreamInstaller/issues) page!
+For reliable and quick assistance, all bugs, crashes and other issues should be referred to the [GitHub Issues]([https://github.com/](https://github.com/ubden/CreamApi/issues)) page!
 
 ---
-##### More Information:
-* SteamCMD installation and appinfo cache can be found at **C:\ProgramData\CreamInstaller**.
-* The program automatically and very quickly updates from [GitHub](https://github.com/pointfeev/CreamInstaller) using [Onova](https://github.com/Tyrrrz/Onova). *updates can be ignored*
-* The program source and other information can be found on [GitHub](https://github.com/pointfeev/CreamInstaller).
