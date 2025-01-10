@@ -3,203 +3,228 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-
-using CreamInstaller.Classes;
-using CreamInstaller.Forms.Components;
+using CreamInstaller.Components;
 using CreamInstaller.Resources;
+using CreamInstaller.Utility;
+using static CreamInstaller.Platforms.Paradox.ParadoxLauncher;
+using static CreamInstaller.Resources.Resources;
 
-namespace CreamInstaller;
+namespace CreamInstaller.Forms;
 
-internal partial class InstallForm : CustomForm
+internal sealed partial class InstallForm : CustomForm
 {
-    internal bool Reselecting = false;
-    internal bool Uninstalling = false;
+    private readonly List<ProgramSelection> disabledSelections = new();
 
-    internal InstallForm(IWin32Window owner, bool uninstall = false) : base(owner)
+    private readonly int programCount = ProgramSelection.AllEnabled.Count;
+    private readonly bool uninstalling;
+    private int completeOperationsCount;
+
+    private int operationsCount;
+    internal bool Reselecting;
+
+    internal InstallForm(bool uninstall = false)
     {
         InitializeComponent();
         Text = Program.ApplicationName;
-        logTextBox.BackColor = InstallationLog.Background;
-        Uninstalling = uninstall;
+        logTextBox.BackColor = LogTextBox.Background;
+        uninstalling = uninstall;
     }
 
-    private int OperationsCount;
-    private int CompleteOperationsCount;
-
-    internal void UpdateProgress(int progress)
+    private void UpdateProgress(int progress)
     {
         if (!userProgressBar.Disposing && !userProgressBar.IsDisposed)
             userProgressBar.Invoke(() =>
             {
-                int value = (int)((float)(CompleteOperationsCount / (float)OperationsCount) * 100) + progress / OperationsCount;
-                if (value < userProgressBar.Value) return;
+                int value = (int)((float)completeOperationsCount / operationsCount * 100) + progress / operationsCount;
+                if (value < userProgressBar.Value)
+                    return;
                 userProgressBar.Value = value;
             });
     }
 
     internal void UpdateUser(string text, Color color, bool info = true, bool log = true)
     {
-        if (info) userInfoLabel.Invoke(() => userInfoLabel.Text = text);
+        if (info)
+            _ = userInfoLabel.Invoke(() => userInfoLabel.Text = text);
         if (log && !logTextBox.Disposing && !logTextBox.IsDisposed)
-        {
             logTextBox.Invoke(() =>
             {
-                if (logTextBox.Text.Length > 0) logTextBox.AppendText(Environment.NewLine, color);
+                if (logTextBox.Text.Length > 0)
+                    logTextBox.AppendText(Environment.NewLine, color);
                 logTextBox.AppendText(text, color);
+                logTextBox.Invalidate();
             });
-        }
     }
-
-    internal static void WriteConfiguration(StreamWriter writer, int steamAppId, string name, SortedList<int, (string name, string iconStaticId)> steamDlcApps, InstallForm installForm = null)
-    {
-        writer.WriteLine();
-        writer.WriteLine($"; {name}");
-        writer.WriteLine("[steam]");
-        writer.WriteLine($"appid = {steamAppId}");
-        writer.WriteLine();
-        writer.WriteLine("[dlc]");
-        if (installForm is not null)
-            installForm.UpdateUser($"Added game to cream_api.ini with appid {steamAppId} ({name})", InstallationLog.Resource, info: false);
-        foreach (KeyValuePair<int, (string name, string iconStaticId)> pair in steamDlcApps)
-        {
-            int appId = pair.Key;
-            (string name, string iconStaticId) dlcApp = pair.Value;
-            writer.WriteLine($"{appId} = {dlcApp.name}");
-            if (installForm is not null)
-                installForm.UpdateUser($"Added DLC to cream_api.ini with appid {appId} ({dlcApp.name})", InstallationLog.Resource, info: false);
-        }
-    }
-
-    internal static async Task UninstallCreamAPI(string directory, InstallForm installForm = null) => await Task.Run(() =>
-    {
-        directory.GetApiComponents(out string api, out string api_o, out string api64, out string api64_o, out string cApi);
-        if (File.Exists(api_o))
-        {
-            if (File.Exists(api))
-            {
-                File.Delete(api);
-                if (installForm is not null)
-                    installForm.UpdateUser($"Deleted file: {Path.GetFileName(api)}", InstallationLog.Resource, info: false);
-            }
-            File.Move(api_o, api);
-            if (installForm is not null)
-                installForm.UpdateUser($"Renamed file: {Path.GetFileName(api_o)} -> {Path.GetFileName(api)}", InstallationLog.Resource, info: false);
-        }
-        if (File.Exists(api64_o))
-        {
-            if (File.Exists(api64))
-            {
-                File.Delete(api64);
-                if (installForm is not null)
-                    installForm.UpdateUser($"Deleted file: {Path.GetFileName(api64)}", InstallationLog.Resource, info: false);
-            }
-            File.Move(api64_o, api64);
-            if (installForm is not null)
-                installForm.UpdateUser($"Renamed file: {Path.GetFileName(api64_o)} -> {Path.GetFileName(api64)}", InstallationLog.Resource, info: false);
-        }
-        if (File.Exists(cApi))
-        {
-            File.Delete(cApi);
-            if (installForm is not null)
-                installForm.UpdateUser($"Deleted file: {Path.GetFileName(cApi)}", InstallationLog.Resource, info: false);
-        }
-    });
-
-    internal static async Task InstallCreamAPI(string directory, ProgramSelection selection, InstallForm installForm = null) => await Task.Run(() =>
-    {
-        directory.GetApiComponents(out string api, out string api_o, out string api64, out string api64_o, out string cApi);
-        if (File.Exists(api) && !File.Exists(api_o))
-        {
-            File.Move(api, api_o);
-            if (installForm is not null)
-                installForm.UpdateUser($"Renamed file: {Path.GetFileName(api)} -> {Path.GetFileName(api_o)}", InstallationLog.Resource, info: false);
-        }
-        if (File.Exists(api_o))
-        {
-            Properties.Resources.API.Write(api);
-            if (installForm is not null)
-                installForm.UpdateUser($"Wrote resource to file: {Path.GetFileName(api)}", InstallationLog.Resource, info: false);
-        }
-        if (File.Exists(api64) && !File.Exists(api64_o))
-        {
-            File.Move(api64, api64_o);
-            if (installForm is not null)
-                installForm.UpdateUser($"Renamed file: {Path.GetFileName(api64)} -> {Path.GetFileName(api64_o)}", InstallationLog.Resource, info: false);
-        }
-        if (File.Exists(api64_o))
-        {
-            Properties.Resources.API64.Write(api64);
-            if (installForm is not null)
-                installForm.UpdateUser($"Wrote resource to file: {Path.GetFileName(api64)}", InstallationLog.Resource, info: false);
-        }
-        if (installForm is not null)
-            installForm.UpdateUser("Generating CreamAPI for " + selection.Name + $" in directory \"{directory}\" . . . ", InstallationLog.Operation);
-        File.Create(cApi).Close();
-        StreamWriter writer = new(cApi, true, Encoding.UTF8);
-        writer.WriteLine("; " + Application.CompanyName + " v" + Application.ProductVersion);
-        if (selection.SteamAppId > 0)
-            WriteConfiguration(writer, selection.SteamAppId, selection.Name, selection.SelectedSteamDlc, installForm);
-        foreach (Tuple<int, string, SortedList<int, (string name, string iconStaticId)>> extraAppDlc in selection.ExtraSteamAppIdDlc)
-            WriteConfiguration(writer, extraAppDlc.Item1, extraAppDlc.Item2, extraAppDlc.Item3, installForm);
-        writer.Flush();
-        writer.Close();
-    });
 
     private async Task OperateFor(ProgramSelection selection)
     {
         UpdateProgress(0);
-        int count = selection.SteamApiDllDirectories.Count;
-        int cur = 0;
-        foreach (string directory in selection.SteamApiDllDirectories)
+        if (selection.Id == "PL")
         {
-            UpdateUser($"{(Uninstalling ? "Uninstalling" : "Installing")} CreamAPI for " + selection.Name + $" in directory \"{directory}\" . . . ", InstallationLog.Operation);
-            if (!Program.IsProgramRunningDialog(this, selection)) throw new OperationCanceledException();
-            if (Uninstalling)
-                await UninstallCreamAPI(directory, this);
-            else
-                await InstallCreamAPI(directory, selection, this);
-            UpdateProgress(++cur / count * 100);
+            UpdateUser("Repairing Paradox Launcher . . . ", LogTextBox.Operation);
+            _ = await Repair(this, selection);
         }
+        UpdateUser(
+            $"{(uninstalling ? "Uninstalling" : "Installing")}" + $" {(uninstalling ? "from" : "for")} " + selection.Name
+          + $" with root directory \"{selection.RootDirectory}\" . . . ", LogTextBox.Operation);
+        IEnumerable<string> invalidDirectories = (await selection.RootDirectory.GetExecutables())
+                                               ?.Where(d => selection.ExecutableDirectories.All(s => s.directory != Path.GetDirectoryName(d.path)))
+                                                .Select(d => Path.GetDirectoryName(d.path));
+        if (selection.ExecutableDirectories.All(s => s.directory != selection.RootDirectory))
+            invalidDirectories = invalidDirectories?.Append(selection.RootDirectory);
+        invalidDirectories = invalidDirectories?.Distinct();
+        if (invalidDirectories is not null)
+            foreach (string directory in invalidDirectories)
+            {
+                if (Program.Canceled)
+                    throw new CustomMessageException("The operation was canceled.");
+                directory.GetKoaloaderComponents(out string old_config, out string config);
+                if (directory.GetKoaloaderProxies().Any(proxy => File.Exists(proxy) && proxy.IsResourceFile(ResourceIdentifier.Koaloader))
+                 || directory != selection.RootDirectory && Koaloader.AutoLoadDLLs.Any(pair => File.Exists(directory + @"\" + pair.dll))
+                 || File.Exists(old_config) || File.Exists(config))
+                {
+                    UpdateUser("Uninstalling Koaloader from " + selection.Name + $" in incorrect directory \"{directory}\" . . . ", LogTextBox.Operation);
+                    await Koaloader.Uninstall(directory, selection.RootDirectory, this);
+                }
+                Thread.Sleep(1);
+            }
+        if (uninstalling || !selection.Koaloader)
+            foreach ((string directory, BinaryType _) in selection.ExecutableDirectories)
+            {
+                if (Program.Canceled)
+                    throw new CustomMessageException("The operation was canceled.");
+                directory.GetKoaloaderComponents(out string old_config, out string config);
+                if (directory.GetKoaloaderProxies().Any(proxy => File.Exists(proxy) && proxy.IsResourceFile(ResourceIdentifier.Koaloader))
+                 || Koaloader.AutoLoadDLLs.Any(pair => File.Exists(directory + @"\" + pair.dll)) || File.Exists(old_config) || File.Exists(config))
+                {
+                    UpdateUser("Uninstalling Koaloader from " + selection.Name + $" in directory \"{directory}\" . . . ", LogTextBox.Operation);
+                    await Koaloader.Uninstall(directory, selection.RootDirectory, this);
+                }
+                Thread.Sleep(1);
+            }
+        bool uninstallProxy = uninstalling || selection.Koaloader;
+        int count = selection.DllDirectories.Count, cur = 0;
+        foreach (string directory in selection.DllDirectories)
+        {
+            if (Program.Canceled)
+                throw new CustomMessageException("The operation was canceled.");
+            if (selection.Platform is Platform.Steam or Platform.Paradox)
+            {
+                directory.GetSmokeApiComponents(out string api32, out string api32_o, out string api64, out string api64_o, out string old_config,
+                    out string config, out string old_log, out string log, out string cache);
+                if (uninstallProxy
+                        ? File.Exists(api32_o) || File.Exists(api64_o) || File.Exists(old_config) || File.Exists(config) || File.Exists(old_log)
+                       || File.Exists(log) || File.Exists(cache)
+                        : File.Exists(api32) || File.Exists(api64))
+                {
+                    UpdateUser(
+                        $"{(uninstallProxy ? "Uninstalling" : "Installing")} SmokeAPI" + $" {(uninstallProxy ? "from" : "for")} " + selection.Name
+                      + $" in directory \"{directory}\" . . . ", LogTextBox.Operation);
+                    if (uninstallProxy)
+                        await SmokeAPI.Uninstall(directory, this);
+                    else
+                        await SmokeAPI.Install(directory, selection, this);
+                }
+            }
+            if (selection.Platform is Platform.Epic or Platform.Paradox)
+            {
+                directory.GetScreamApiComponents(out string api32, out string api32_o, out string api64, out string api64_o, out string config, out string log);
+                if (uninstallProxy
+                        ? File.Exists(api32_o) || File.Exists(api64_o) || File.Exists(config) || File.Exists(log)
+                        : File.Exists(api32) || File.Exists(api64))
+                {
+                    UpdateUser(
+                        $"{(uninstallProxy ? "Uninstalling" : "Installing")} ScreamAPI" + $" {(uninstallProxy ? "from" : "for")} " + selection.Name
+                      + $" in directory \"{directory}\" . . . ", LogTextBox.Operation);
+                    if (uninstallProxy)
+                        await ScreamAPI.Uninstall(directory, this);
+                    else
+                        await ScreamAPI.Install(directory, selection, this);
+                }
+            }
+            if (selection.Platform is Platform.Ubisoft)
+            {
+                directory.GetUplayR1Components(out string api32, out string api32_o, out string api64, out string api64_o, out string config, out string log);
+                if (uninstallProxy
+                        ? File.Exists(api32_o) || File.Exists(api64_o) || File.Exists(config) || File.Exists(log)
+                        : File.Exists(api32) || File.Exists(api64))
+                {
+                    UpdateUser(
+                        $"{(uninstallProxy ? "Uninstalling" : "Installing")} Uplay R1 Unlocker" + $" {(uninstallProxy ? "from" : "for")} " + selection.Name
+                      + $" in directory \"{directory}\" . . . ", LogTextBox.Operation);
+                    if (uninstallProxy)
+                        await UplayR1.Uninstall(directory, this);
+                    else
+                        await UplayR1.Install(directory, selection, this);
+                }
+                directory.GetUplayR2Components(out string old_api32, out string old_api64, out api32, out api32_o, out api64, out api64_o, out config, out log);
+                if (uninstallProxy
+                        ? File.Exists(api32_o) || File.Exists(api64_o) || File.Exists(config) || File.Exists(log)
+                        : File.Exists(old_api32) || File.Exists(old_api64) || File.Exists(api32) || File.Exists(api64))
+                {
+                    UpdateUser(
+                        $"{(uninstallProxy ? "Uninstalling" : "Installing")} Uplay R2 Unlocker" + $" {(uninstallProxy ? "from" : "for")} " + selection.Name
+                      + $" in directory \"{directory}\" . . . ", LogTextBox.Operation);
+                    if (uninstallProxy)
+                        await UplayR2.Uninstall(directory, this);
+                    else
+                        await UplayR2.Install(directory, selection, this);
+                }
+            }
+            UpdateProgress(++cur / count * 100);
+            Thread.Sleep(1);
+        }
+        if (selection.Koaloader && !uninstalling)
+            foreach ((string directory, BinaryType binaryType) in selection.ExecutableDirectories)
+            {
+                if (Program.Canceled)
+                    throw new CustomMessageException("The operation was canceled.");
+                UpdateUser("Installing Koaloader to " + selection.Name + $" in directory \"{directory}\" . . . ", LogTextBox.Operation);
+                await Koaloader.Install(directory, binaryType, selection, selection.RootDirectory, this);
+                Thread.Sleep(1);
+            }
         UpdateProgress(100);
     }
 
     private async Task Operate()
     {
-        List<ProgramSelection> programSelections = ProgramSelection.AllUsableEnabled;
-        OperationsCount = programSelections.Count;
-        CompleteOperationsCount = 0;
-        List<ProgramSelection> disabledSelections = new();
+        List<ProgramSelection> programSelections = ProgramSelection.AllEnabled;
+        operationsCount = programSelections.Count;
+        completeOperationsCount = 0;
         foreach (ProgramSelection selection in programSelections)
         {
-            if (!Program.IsProgramRunningDialog(this, selection)) throw new OperationCanceledException();
+            if (Program.Canceled || !Program.IsProgramRunningDialog(this, selection))
+                throw new CustomMessageException("The operation was canceled.");
             try
             {
                 await OperateFor(selection);
-                UpdateUser($"Operation succeeded for {selection.Name}.", InstallationLog.Success);
+                UpdateUser($"Operation succeeded for {selection.Name}.", LogTextBox.Success);
                 selection.Enabled = false;
                 disabledSelections.Add(selection);
             }
             catch (Exception exception)
             {
-                UpdateUser($"Operation failed for {selection.Name}: " + exception.ToString(), InstallationLog.Error);
+                UpdateUser($"Operation failed for {selection.Name}: " + exception, LogTextBox.Error);
             }
-            ++CompleteOperationsCount;
+            ++completeOperationsCount;
         }
         Program.Cleanup();
-        List<ProgramSelection> FailedSelections = ProgramSelection.AllUsableEnabled;
-        if (FailedSelections.Any())
-            if (FailedSelections.Count == 1) throw new CustomMessageException($"Operation failed for {FailedSelections.First().Name}.");
-            else throw new CustomMessageException($"Operation failed for {FailedSelections.Count} programs.");
-        foreach (ProgramSelection selection in disabledSelections) selection.Enabled = true;
+        List<ProgramSelection> failedSelections = ProgramSelection.AllEnabled;
+        if (failedSelections.Any())
+            if (failedSelections.Count == 1)
+                throw new CustomMessageException($"Operation failed for {failedSelections.First().Name}.");
+            else
+                throw new CustomMessageException($"Operation failed for {failedSelections.Count} programs.");
+        foreach (ProgramSelection selection in disabledSelections)
+            selection.Enabled = true;
+        disabledSelections.Clear();
     }
-
-    private readonly int ProgramCount = ProgramSelection.AllUsableEnabled.Count;
 
     private async void Start()
     {
+        Program.Canceled = false;
         acceptButton.Enabled = false;
         retryButton.Enabled = false;
         cancelButton.Enabled = true;
@@ -208,11 +233,12 @@ internal partial class InstallForm : CustomForm
         try
         {
             await Operate();
-            UpdateUser($"CreamAPI successfully {(Uninstalling ? "uninstalled" : "installed and generated")} for " + ProgramCount + " program(s).", InstallationLog.Success);
+            UpdateUser($"DLC unlocker(s) successfully {(uninstalling ? "uninstalled" : "installed and generated")} for " + programCount + " program(s).",
+                LogTextBox.Success);
         }
         catch (Exception exception)
         {
-            UpdateUser($"CreamAPI {(Uninstalling ? "uninstallation" : "installation and/or generation")} failed: " + exception.ToString(), InstallationLog.Error);
+            UpdateUser($"DLC unlocker {(uninstalling ? "uninstallation" : "installation and/or generation")} failed: " + exception, LogTextBox.Error);
             retryButton.Enabled = true;
         }
         userProgressBar.Value = userProgressBar.Maximum;
@@ -232,7 +258,8 @@ internal partial class InstallForm : CustomForm
         }
         catch (Exception e)
         {
-            if (ExceptionHandler.OutputException(e)) goto retry;
+            if (e.HandleException(this))
+                goto retry;
             Close();
         }
     }
@@ -255,6 +282,9 @@ internal partial class InstallForm : CustomForm
     {
         Program.Cleanup();
         Reselecting = true;
+        foreach (ProgramSelection selection in disabledSelections)
+            selection.Enabled = true;
+        disabledSelections.Clear();
         Close();
     }
 }

@@ -1,23 +1,15 @@
-﻿
-namespace CreamInstaller
-{
-    partial class InstallForm
-    {
-        /// <summary>
-        ///  Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
+﻿using System.ComponentModel;
+using System.Windows.Forms;
 
-        /// <summary>
-        ///  Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+namespace CreamInstaller.Forms
+{
+    sealed partial class InstallForm
+    {
+        private IContainer components = null;
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
-            {
+            if (disposing && components is not null)
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
@@ -128,6 +120,8 @@ namespace CreamInstaller
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoSize = true;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(784, 561);
             this.Controls.Add(this.reselectButton);
             this.Controls.Add(this.logTextBox);
@@ -137,27 +131,26 @@ namespace CreamInstaller
             this.Controls.Add(this.userProgressBar);
             this.Controls.Add(this.userInfoLabel);
             this.DoubleBuffered = true;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(600, 400);
             this.Name = "InstallForm";
-            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "InstallForm";
-            this.TopMost = true;
             this.Load += new System.EventHandler(this.OnLoad);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-        private System.Windows.Forms.ProgressBar userProgressBar;
-        private System.Windows.Forms.Label userInfoLabel;
-        private System.Windows.Forms.Button acceptButton;
-        private System.Windows.Forms.Button retryButton;
-        private System.Windows.Forms.Button cancelButton;
-        private System.Windows.Forms.RichTextBox logTextBox;
-        private System.Windows.Forms.Button reselectButton;
+
+        private ProgressBar userProgressBar;
+        private Label userInfoLabel;
+        private Button acceptButton;
+        private Button retryButton;
+        private Button cancelButton;
+        private RichTextBox logTextBox;
+        private Button reselectButton;
     }
 }
 

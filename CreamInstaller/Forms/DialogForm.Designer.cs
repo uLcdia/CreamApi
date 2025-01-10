@@ -1,23 +1,15 @@
-﻿
-namespace CreamInstaller
+﻿using System.ComponentModel;
+using System.Windows.Forms;
+
+namespace CreamInstaller.Forms
 {
     partial class DialogForm
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        private IContainer components = null;
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
-            {
+            if (disposing && components is not null)
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
@@ -31,7 +23,7 @@ namespace CreamInstaller
         {
             this.cancelButton = new System.Windows.Forms.Button();
             this.acceptButton = new System.Windows.Forms.Button();
-            this.descriptionLabel = new System.Windows.Forms.Label();
+            this.descriptionLabel = new System.Windows.Forms.LinkLabel();
             this.icon = new System.Windows.Forms.PictureBox();
             this.descriptionPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.buttonPanel = new System.Windows.Forms.FlowLayoutPanel();
@@ -74,7 +66,9 @@ namespace CreamInstaller
             // 
             this.descriptionLabel.AutoSize = true;
             this.descriptionLabel.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.descriptionLabel.Location = new System.Drawing.Point(69, 12);
+            this.descriptionLabel.LinkArea = new System.Windows.Forms.LinkArea(0, 0);
+            this.descriptionLabel.Location = new System.Drawing.Point(75, 12);
+            this.descriptionLabel.Margin = new System.Windows.Forms.Padding(9, 0, 3, 0);
             this.descriptionLabel.Name = "descriptionLabel";
             this.descriptionLabel.Size = new System.Drawing.Size(94, 15);
             this.descriptionLabel.TabIndex = 2;
@@ -132,9 +126,9 @@ namespace CreamInstaller
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "DialogForm";
+            this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "DialogForm";
-            this.TopMost = true;
             ((System.ComponentModel.ISupportInitialize)(this.icon)).EndInit();
             this.descriptionPanel.ResumeLayout(false);
             this.descriptionPanel.PerformLayout();
@@ -147,11 +141,11 @@ namespace CreamInstaller
 
         #endregion
 
-        private System.Windows.Forms.Button cancelButton;
-        private System.Windows.Forms.Button acceptButton;
-        private System.Windows.Forms.Label descriptionLabel;
-        private System.Windows.Forms.PictureBox icon;
-        private System.Windows.Forms.FlowLayoutPanel descriptionPanel;
-        private System.Windows.Forms.FlowLayoutPanel buttonPanel;
+        private Button cancelButton;
+        private Button acceptButton;
+        private PictureBox icon;
+        private FlowLayoutPanel descriptionPanel;
+        private FlowLayoutPanel buttonPanel;
+        private LinkLabel descriptionLabel;
     }
 }
