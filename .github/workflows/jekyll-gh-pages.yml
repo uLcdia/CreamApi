@@ -30,9 +30,6 @@ jobs:
           source: ./
           destination: ./_site
       
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v1
-  
   deploy:
     runs-on: ubuntu-latest
     needs: build
